@@ -16,6 +16,8 @@ WEISS = (255, 255, 255)
 GRUEN = (0, 200, 0)
 DUNKELGRUEN = (0, 150, 0)
 ROT = (200, 0, 0)
+BANANENGELB = (255, 225, 50)
+BANANENDUNKEL = (180, 140, 0)
 GRAU = (40, 40, 40)
 GELB = (255, 220, 0)
 
@@ -117,15 +119,29 @@ class Spiel:
         for y in range(0, HOEHE, ZELLEN_GROESSE):
             pygame.draw.line(self.flaeche, GRAU, (0, y), (BREITE, y))
 
-    def apfel_zeichnen(self):
+    def banane_zeichnen(self):
         ax, ay = self.apfel
-        rect = pygame.Rect(ax * ZELLEN_GROESSE + 2, ay * ZELLEN_GROESSE + 2,
-                           ZELLEN_GROESSE - 4, ZELLEN_GROESSE - 4)
-        pygame.draw.ellipse(self.flaeche, ROT, rect)
-        # Stiel
-        pygame.draw.line(self.flaeche, DUNKELGRUEN,
-                         (ax * ZELLEN_GROESSE + ZELLEN_GROESSE // 2, ay * ZELLEN_GROESSE + 2),
-                         (ax * ZELLEN_GROESSE + ZELLEN_GROESSE // 2, ay * ZELLEN_GROESSE - 2), 2)
+        cx = ax * ZELLEN_GROESSE + ZELLEN_GROESSE // 2
+        cy = ay * ZELLEN_GROESSE + ZELLEN_GROESSE // 2
+        # Banane: gebogener Körper als dicke Linie aus Kreisen
+        import math
+        punkte = []
+        for i in range(11):
+            t = i / 10  # 0..1
+            winkel = math.pi * 0.15 + t * math.pi * 0.7
+            r = 7
+            px = int(cx + r * math.cos(winkel) * 1.1)
+            py = int(cy - r * math.sin(winkel))
+            punkte.append((px, py))
+        # Schatten / Kontur
+        for i in range(len(punkte) - 1):
+            pygame.draw.line(self.flaeche, BANANENDUNKEL, punkte[i], punkte[i + 1], 5)
+        # Hauptfarbe
+        for i in range(len(punkte) - 1):
+            pygame.draw.line(self.flaeche, BANANENGELB, punkte[i], punkte[i + 1], 3)
+        # Enden der Banane (dunkle Spitzen)
+        pygame.draw.circle(self.flaeche, BANANENDUNKEL, punkte[0], 2)
+        pygame.draw.circle(self.flaeche, BANANENDUNKEL, punkte[-1], 2)
 
     def hud_zeichnen(self):
         punkte_text = self.schrift_klein.render(f"Punkte: {self.punkte}", True, WEISS)
@@ -216,7 +232,7 @@ class Spiel:
     def zeichnen(self):
         self.flaeche.fill(SCHWARZ)
         self.gitter_zeichnen()
-        self.apfel_zeichnen()
+        self.banane_zeichnen()
         self.snake.zeichnen(self.flaeche)
         self.hud_zeichnen()
         if self.game_over:
